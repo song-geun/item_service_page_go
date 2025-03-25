@@ -6,9 +6,9 @@ import (
 	"strconv"
 )
 
-func Usp_productmanage(prstype string, p_id int64, p_name string, p_value int64, p_quatity int64) *sql.Rows {
+func Usp_productmanage(prstype string, p_id int, p_name string, p_value int, p_quatity int) *sql.Rows {
 	var s = ", "
-	var querystr string = "call USP_ProductManage(" + "'" + prstype + "'" + s + strconv.FormatInt(p_id, 10) + s + "'" + p_name + "'" + s + strconv.FormatInt(p_value, 10) + s + strconv.FormatInt(p_quatity, 10) + ")"
+	var querystr string = "call USP_ProductManage(" + "'" + prstype + "'" + s + strconv.Itoa(p_id) + s + "'" + p_name + "'" + s + strconv.Itoa(p_value) + s + strconv.Itoa(p_quatity) + ")"
 	querystr += ";"
 	var result = repository5.RepositoryInstance.Procedure_query(querystr)
 	return result

@@ -1,12 +1,17 @@
 package dto
 
 import (
+	"database/sql"
+	"encoding/json"
 	_ "io"
 	_ "io/ioutil"
+	"item_service_page/src/datastruct"
 	"item_service_page/src/entity"
 	"item_service_page/src/repository5"
+	"log"
 	_ "net/http"
 	"strconv"
+	"strings"
 )
 
 var ans string = ""
@@ -34,8 +39,28 @@ func solve(list []entity.T_product, num int) {
 	solve(list, num+1)
 }
 
-func FindAllD() []entity.T_product {
-	var sq = repository5.RepositoryInstance.USP_ProductManage("S1", 0, " ", 0, 0)
+func ProductInsert(str string, st int, en int) {
+	datastruct.New()
+	var str2 = str
+	var d entity.T_product
+	for i := st; i <= en; i++ {
+		if strings.Compare(str[i:i+1], "{") == 0 {
+			datastruct.Stack.Push_back(i)
+		}
+		if strings.Compare(str[i:i+1], "}") == 0 {
+			str3 := str2[datastruct.Stack.Top() : i+1]
+			err := json.Unmarshal([]byte(str3), &d)
+			if err != nil {
+				log.Fatal(err)
+			}
+			repository5.RepositoryInstance.USP_ProductManage("I1", d.P_id, d.P_name, d.Value, d.Quantity)
+			datastruct.Stack.Del()
+		}
+	}
+}
+
+func ProductDto(sq *sql.Rows) []entity.T_product {
+	//var sq = repository5.RepositoryInstance.USP_ProductManage("S1", 0, " ", 0, 0)
 	mylist := []entity.T_product{}
 
 	for sq.Next() {
@@ -54,3 +79,6 @@ func FindAllD() []entity.T_product {
 	ans += "}"
 	return mylist
 }
+
+// []byte는 *void
+// any는 *void

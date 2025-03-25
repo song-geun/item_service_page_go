@@ -17,8 +17,8 @@ func main() {
 	service.Product()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/Product/list", controller.Controller)
-
+	mux.HandleFunc("/Product/list", controller.FinDAll)
+	mux.HandleFunc("/Product/insertAll", controller.Insert)
 	handler := cors.Default().Handler(mux)
 	http.ListenAndServe(":5000", handler)
 }

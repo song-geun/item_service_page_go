@@ -35,7 +35,7 @@ BEGIN
         SELECT * FROM t_product_data WHERE LEFT(DATE,6) = LEFT(P_DATE,6);
     ELSEIF prstype = 'I1' THEN
         IF EXISTS(SELECT 1 FROM t_product_data) THEN
-            IF NOT EXISTS(SELECT 1 FROM t_product_data WHERE Pprod_data_id = prod_data_id) THEN
+            IF NOT EXISTS(SELECT 1 FROM t_product_data WHERE prod_data_id = Pprod_data_id) THEN
                 SET @M1 = (SELECT MAX(p_id) FROM t_product) + 1;
                 INSERT INTO t_product_data(prod_data_id, p_id, p_name, value, p_quantity, date) values (@M1,Pp_id, Pp_name, P_value, P_quantity,P_DATE);
             ELSE

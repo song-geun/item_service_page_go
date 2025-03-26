@@ -81,7 +81,7 @@ BEGIN
         IF EXISTS(SELECT * FROM t_product) THEN
             IF NOT EXISTS(SELECT * FROM t_product WHERE p_id = Pp_id) THEN
                 SET @M1 = (SELECT MAX(p_id) FROM t_product) + 1;
-                INSERT INTO t_product(p_id, p_name, value, quantity) values (@M1,Pp_id, Pp_name, P_value);
+                INSERT INTO t_product(p_id, p_name, value, quantity) values (@M1,Pp_name, P_value, P_quantity);
             ELSE
                 UPDATE t_product SET p_id = Pp_id, p_name = Pp_name, value = P_value, quantity = P_quantity WHERE p_id = Pp_id;
             END IF;
@@ -95,4 +95,6 @@ BEGIN
             UPDATE t_product SET p_id = Pp_id, p_name = Pp_name, value = P_value, quantity = P_quantity;
     END IF;
 END;
+
+
 ```

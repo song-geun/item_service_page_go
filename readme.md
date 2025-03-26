@@ -1,31 +1,25 @@
-DB : mysql8.0.41
 
-[  
-](https://github.com/song-geun/item_service_page_go)[https://github.com/song-geun/item\_service\_page\_go](https://github.com/song-geun/item_service_page_go)
+> DB : mysql8.0.41
 
-[GitHub - song-geun/item\_service\_page\_go
+# **소스코드**
 
-Contribute to song-geun/item\_service\_page\_go development by creating an account on GitHub.
+[itemServicePage Client](https://github.com/song-geun/itemServicePage_Client)
+[itemServicePage GO 코드](https://github.com/song-geun/item\_service\_page\_go)
+[itemServicePage Spring 코드](https://github.com/song-geun/itemServicePage_Server)
 
-github.com](https://github.com/song-geun/item_service_page_go)
 
-[https://github.com/song-geun/itemServicePage\_Server](https://github.com/song-geun/itemServicePage_Server)
+#### **t_product 테이블**
 
-[GitHub - song-geun/itemServicePage\_Server: 엄마용
+![](https://velog.velcdn.com/images/rikoriko/post/936bedfc-7e3e-4cee-95ee-6d49af2a9dc2/image.png)
 
-엄마용. Contribute to song-geun/itemServicePage\_Server development by creating an account on GitHub.
+#### **t_product_data 테이블**
 
-github.com](https://github.com/song-geun/itemServicePage_Server)
+![](https://velog.velcdn.com/images/rikoriko/post/b54b4e42-2970-48c6-a0df-90c2d0573613/image.png)
 
-DB구조 t\_product
 
-[##_Image|kage@Cf8Xn/btsMXdqBtkF/msgOw8IVvsaLgy8coNcZK1/img.png|CDM|1.3|{"originWidth":1193,"originHeight":49,"style":"alignCenter"}_##]
 
-DB구조 t\_product\_data
 
-[##_Image|kage@dqdS0r/btsMXqcfZpR/NaIW8nLyEZRW87f7hqZYek/img.png|CDM|1.3|{"originWidth":1884,"originHeight":58,"style":"alignCenter"}_##]
-
-1\. USP\_ProductDataManage
+## **1\. USP\_ProductDataManage**
 
 ```
 create
@@ -38,17 +32,24 @@ BEGIN
     ELSEIF prstype = 'S2' THEN
         SELECT * FROM t_product_data WHERE DATE = P_DATE;
     ELSEIF prstype = 'S3' THEN
-        SELECT * FROM t_product_data WHERE DATE = left(P_DATE,6);
+        SELECT * FROM t_product_data WHERE LEFT(DATE,6) = LEFT(P_DATE,6);
     ELSEIF prstype = 'I1' THEN
-        UPDATE t_product_data SET prod_data_id=Pprod_data_id, p_id =  Pp_id, p_name = Pp_name,
-                                  value = P_value, quantity =  P_quantity, DATE = P_DATE;
+        IF EXISTS(SELECT 1 FROM t_product_data) THEN
+            IF NOT EXISTS(SELECT 1 FROM t_product_data WHERE Pprod_data_id = prod_data_id) THEN
+                SET @M1 = (SELECT MAX(p_id) FROM t_product) + 1;
+                INSERT INTO t_product_data(prod_data_id, p_id, p_name, value, p_quantity, date) values (@M1,Pp_id, Pp_name, P_value, P_quantity,P_DATE);
+            ELSE
+                UPDATE t_product_data SET p_id = Pp_id, p_name = Pp_name, value = P_value, p_quantity = P_quantity, date = P_DATE WHERE prod_data_id = Pprod_data_id;
+            END IF;
+        ELSE
+            INSERT INTO t_product_data(prod_data_id, p_id, p_name, value, p_quantity, date) values (1,Pp_id, Pp_name, P_value, P_quantity,P_DATE);
+        END if;
     END IF;
 END;
-
 ```
-
-2\. USP\_ProductDataManage2
-
+​
+## **2\. USP\_ProductDataManage2**
+​
 ```
 create
     definer = root@localhost procedure USP_ProductDataManage2(IN prstype varchar(10), IN Pprod_data_id varchar(20),
@@ -57,17 +58,17 @@ create
                                                               IN Pp_DATE1 varchar(250), IN Pp_DATE2 varchar(250))
 BEGIN
     IF prstype = 'S1' THEN
-       SELECT p_id as prod_data_id, p_id,p_name, value, SUM(p_quantity) as p_quantity, p_id as date
+       SELECT p_id as prod_data_id, p_id,p_name, value, SUM(quantity) as quantity, p_id as date
        FROM t_product_data
        WHERE DATE >= Pp_DATE1 AND DATE <= Pp_DATE2
        GROUP BY p_id,p_name, value;
     END IF;
 END;
-
+​
 ```
-
-3\. USP\_ProductManage
-
+​
+## **3\. USP\_ProductManage**
+​
 ```
 create
     definer = root@localhost procedure USP_ProductManage(IN prstype varchar(50), IN Pp_id bigint,
@@ -77,20 +78,21 @@ BEGIN
     IF prstype = 'S1' THEN
         SELECT * FROM t_product;
     ELSEIF prstype = 'I1' THEN
-        IF NOT EXISTS(SELECT 1 FROM t_product WHERE p_id = Pp_id LIMIT 1) THEN
-            INSERT INTO t_product values (Pp_id, Pp_name, P_value, P_quantity);
+        IF EXISTS(SELECT * FROM t_product) THEN
+            IF NOT EXISTS(SELECT * FROM t_product WHERE p_id = Pp_id) THEN
+                SET @M1 = (SELECT MAX(p_id) FROM t_product) + 1;
+                INSERT INTO t_product(p_id, p_name, value, quantity) values (@M1,Pp_id, Pp_name, P_value);
+            ELSE
+                UPDATE t_product SET p_id = Pp_id, p_name = Pp_name, value = P_value, quantity = P_quantity WHERE p_id = Pp_id;
+            END IF;
         ELSE
-            UPDATE t_product SET p_id = Pp_id, p_name = Pp_name, value = P_value, quantity = P_quantity WHERE p_id = Pp_id;
-        END IF;
+            INSERT INTO t_product(p_id, p_name, value, quantity) values (1, Pp_name, P_value, P_quantity);
+        END if;
+
     ELSEIF prstype = 'D1' THEN
-        IF NOT EXISTS(SELECT 1 FROM t_product WHERE p_id = Pp_id) THEN
             DELETE FROM t_product WHERE p_id = Pp_id;
-        END IF;
     ELSEIF prstype = 'U1' THEN
-        IF NOT EXISTS(SELECT 1 FROM t_product WHERE p_id = Pp_id) THEN
             UPDATE t_product SET p_id = Pp_id, p_name = Pp_name, value = P_value, quantity = P_quantity;
-        END IF;
     END IF;
 END;
-
 ```
